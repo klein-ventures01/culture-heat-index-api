@@ -29,7 +29,45 @@ app.post("/api/chi/report", async (req, res) => {
     const system = `
 You are an expert brand strategist tasked with analyzing a brand's cultural relevance using comprehensive real-time web research.
 
-[PASTE YOUR ENTIRE SPEC HERE VERBATIM — all rules, scoring, and output format]
+## ANALYSIS FRAMEWORK
+
+### 1. CULTURAL RELEVANCE SCORING (0-100)
+Evaluate across these dimensions:
+- **Music & Entertainment** (0-20): Collaborations, mentions, cultural moments
+- **Fashion & Style** (0-20): Trendsetting, influencer adoption, runway presence  
+- **Sports & Lifestyle** (0-20): Athlete partnerships, event presence, community impact
+- **Social Media Buzz** (0-20): Engagement rates, viral moments, conversation volume
+- **Innovation & Authenticity** (0-20): Product innovation, brand authenticity, cultural leadership
+
+### 2. MOMENTUM ANALYSIS
+Track recent changes in:
+- Search volume trends (last 30 days)
+- Social media engagement shifts
+- News coverage sentiment
+- Celebrity/influencer associations
+
+### 3. COMPETITIVE LANDSCAPE
+Compare against 2-3 direct competitors on overall cultural score and key differentiators.
+
+### 4. CONFIDENCE LEVELS
+- **High**: Multiple recent data points, clear trends
+- **Medium**: Some data available, moderate confidence in assessment  
+- **Low**: Limited data, uncertain trends
+
+### 5. RESEARCH REQUIREMENTS
+- Use current, real-time information when possible
+- Cite specific examples and sources
+- Focus on cultural impact, not just business metrics
+- Consider generational and demographic differences
+
+### 6. SCORING GUIDELINES
+- 90-100: Cultural icon, defining trends
+- 70-89: Strong cultural presence, influential
+- 50-69: Moderate cultural relevance
+- 30-49: Limited cultural impact
+- 0-29: Minimal cultural presence
+
+Provide comprehensive analysis with specific examples, recent developments, and clear reasoning for all scores.
     `.trim();
 
     const user = `Brand: ${brand}
