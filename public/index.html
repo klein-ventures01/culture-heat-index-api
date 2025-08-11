@@ -1,0 +1,127 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Cultural Heat Index</title>
+  <style>
+    body { font-family: Inter, system-ui, Arial, sans-serif; margin: 24px; color:#0f172a; background:#f8fafc; }
+    .wrap { max-width: 980px; margin: 0 auto; }
+    .center { text-align: center; }
+    .grid { display:grid; gap:16px; grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .card { background:#fff; border:1px solid #e5e7eb; border-radius:16px; padding:16px; text-align:center; }
+    .btn { background:#4f46e5; color:#fff; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; }
+    table { width:100%; border-collapse: collapse; background:#fff; border:1px solid #e5e7eb; border-radius:16px; overflow:hidden; }
+    th, td { padding:12px; border-top:1px solid #e5e7eb; text-align:left; font-size:14px; vertical-align: top; }
+    th { background:#f1f5f9; cursor:pointer; }
+    input { padding:8px 12px; border:1px solid #cbd5e1; border-radius:8px 0 0 8px; width:260px; }
+    .inputRow { display:flex; justify-content:center; gap:0; margin: 16px 0 24px; }
+    .score { font-weight: 800; font-size: 24px; color:#65a30d; }
+    .muted { color:#64748b; font-size:12px; }
+    @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="center">
+      <h1>Cultural Heat Index</h1>
+      <p>Generate comprehensive brand analysis reports powered by AI. Discover cultural relevance across music, fashion, sports, and more.</p>
+    </div>
+
+    <div class="inputRow">
+      <input id="q" placeholder="Search brand..." />
+      <button id="go" class="btn">🔍 Run Research</button>
+    </div>
+
+    <div id="cards" class="grid"></div>
+
+    <div style="margin-top:16px">
+      <table id="table">
+        <thead>
+          <tr>
+            <th data-k="brand">Brand</th>
+            <th data-k="score">Culture Score</th>
+            <th data-k="confidence">Confidence</th>
+            <th>Summary</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // Same-origin: this hits your Express API at /api/chi/report
+    const API = "/api/chi/report";
+    const state = { reports: [], sortK: "brand", sortDir: 1 };
+
+    const q = document.getElementById("q");
+    const go = document.getElementById("go");
+    const cards = document.getElementById("cards");
+    const rows = document.getElementById("rows");
+    const table = document.getElementById("table");
+
+    const sfix = v => {
+      const n = Number(v);
+      return Number.isFinite(n) ? n.toFixed(1) : "N/A";
+    };
+
+    function draw(){
+      // cards: latest three
+      cards.innerHTML = state.reports.slice(0,3).map(r => `
+        <div class="card">
+          <div style="height:48px">${r.logo? `<img src="${r.logo}" style="height:48px">`:""}</div>
+          <div style="font-weight:700;margin-top:6px">${r.brand||"—"}</div>
+          <div class="score">${sfix(r.overallScore)}</div>
+          <div class="muted">Momentum avg: ${r.momentumAvg>0?"+":""}${r.momentumAvg||0}%</div>
+          <div style="margin-top:8px;font-size:14px">${(r.summary||"").split('.')[0]||""}.</div>
+        </div>`).join("");
+
+      // table (sortable)
+      const data = [...state.reports].sort((a,b)=>{
+        let k = state.sortK;
+        let x = k==="score" ? (a.overallScore||0)-(b.overallScore||0)
+              : k==="confidence" ? String(a.confidence||"").localeCompare(b.confidence||"")
+              : String(a.brand||"").localeCompare(b.brand||"");
+        return x*state.sortDir;
+      });
+      rows.innerHTML = data.map(r=>`
+        <tr>
+          <td>${r.brand||"—"}</td>
+          <td>${sfix(r.overallScore)}</td>
+          <td>${r.confidence||"Medium"}</td>
+          <td>${r.summary||""}</td>
+        </tr>`).join("");
+    }
+
+    async function run(){
+      const brand = q.value.trim();
+      if(!brand) return;
+      go.disabled = true; go.textContent = "Researching...";
+      try{
+        const res = await fetch(API, {
+          method:"POST",
+          headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify({ brand })
+        });
+        if(!res.ok) throw new Error("HTTP "+res.status);
+        const r = await res.json();
+        state.reports.unshift(r);
+        draw();
+      }catch(e){ alert("Request failed: "+e.message); }
+      finally{ go.disabled=false; go.textContent = "🔍 Run Research"; }
+    }
+
+    go.onclick = run;
+    table.querySelectorAll("th[data-k]").forEach(th=>{
+      th.onclick = ()=>{
+        const k = th.dataset.k;
+        if(state.sortK===k) state.sortDir*=-1; else { state.sortK=k; state.sortDir=1; }
+        draw();
+      };
+    });
+
+    draw();
+  </script>
+</body>
+</html>
